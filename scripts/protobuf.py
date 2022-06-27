@@ -8,7 +8,6 @@ import difflib
 import glob
 from io import BytesIO
 import os
-import re
 import stat
 import subprocess
 import sys
@@ -79,12 +78,8 @@ def _protobuf_url(version):
 
 
 def _get_protobuf_version():
-    with open("base_versions.txt", encoding="utf-8") as file:
-        for line in file:
-            match = re.match(r"protobuf==(\d+\.\d+\.\d+)[^0-9,]*", line)
-            if match:
-                return match.group(1)
-    raise Exception("failed to determine protobuf version")
+    # TODO: Version does not match python package version anymore
+    return "3.21.0", "21.0"
 
 
 def _download_protoc(force=False):
@@ -92,8 +87,8 @@ def _download_protoc(force=False):
         print("Not downloading protoc (already exists)")
         return
 
-    version = _get_protobuf_version()
-    url = _protobuf_url(version)
+    version, download_version = _get_protobuf_version()
+    url = _protobuf_url(download_version)
 
     print("Downloading", url)
 
@@ -116,7 +111,7 @@ def _download_protoc(force=False):
 
 
 def _verify_protoc_version():
-    expected_version = _get_protobuf_version()
+    expected_version = _get_protobuf_version()[0]
     try:
         ret = subprocess.run(
             [protoc_path(), "--version"],
@@ -146,7 +141,7 @@ def _verify_protoc_version():
 
 def protoc_path():
     """Return path to protoc binary."""
-    binary = f"protoc-{_get_protobuf_version()}" + (
+    binary = f"protoc-{_get_protobuf_version()[0]}" + (
         ".exe" if sys.platform == "win32" else ""
     )
     return os.path.join("bin", binary)
